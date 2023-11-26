@@ -26,5 +26,4 @@ func connectDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }

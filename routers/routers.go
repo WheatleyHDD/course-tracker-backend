@@ -6,7 +6,7 @@ var apiUrl string = "/api/"
 
 func Route(app *fiber.App) {
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("<h1>Бэкенд сервиса отслеживания обучения</h1><a href=\"/docs\">Документация</a>")
+		return c.SendString("")
 	})
 
 	// ===========================
