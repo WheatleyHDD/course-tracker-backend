@@ -10,7 +10,7 @@ func main() {
 	app := fiber.New()
 
 	connectDB()
-	routers.Route(app)
+	routers.Route(app, Db)
 
 	app.Listen(":3000")
 }

@@ -8,9 +8,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var (
+	Db *sql.DB
+)
+
 func connectDB() {
 	hostname := "localhost"
-	username := "dmitriyv"
+	username := "dvolkov"
 	password := ""
 	database := "course-tracker"
 	sslMode := "disable"

@@ -1,10 +1,16 @@
 package routers
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"database/sql"
+
+	"github.com/gofiber/fiber/v2"
+
+	_ "github.com/lib/pq"
+)
 
 var apiUrl string = "/api/"
 
-func Route(app *fiber.App) {
+func Route(app *fiber.App, db *sql.DB) {
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("")
 	})
@@ -21,6 +27,8 @@ func Route(app *fiber.App) {
 		return c.SendString("Hello, World!")
 	})
 	app.Post(apiUrl+"register", func(c *fiber.Ctx) error {
+		// данные которые получаем
+		//
 		return c.SendString("Hello, World!")
 	})
 
