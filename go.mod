@@ -2,6 +2,8 @@ module course-tracker
 
 go 1.21.3
 
+require golang.org/x/crypto v0.16.0
+
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/gofiber/fiber/v2 v2.50.0 // indirect
@@ -15,5 +17,5 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.50.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 )
