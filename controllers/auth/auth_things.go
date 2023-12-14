@@ -1,4 +1,4 @@
-package routers
+package auth
 
 import (
 	"crypto/md5"
@@ -8,6 +8,8 @@ import (
 
 	"database/sql"
 	"log"
+
+	"course-tracker/controllers/errors"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -48,29 +50,29 @@ func (l *LoginForm) CheckIsNotNull() bool {
 // ==========================
 // ======== Методы ==========
 // ==========================
-func register(ctx *fiber.Ctx, db *sql.DB) error {
+func Register(ctx *fiber.Ctx, db *sql.DB) error {
 	formdata := new(RegisterForm)
 
 	if err := ctx.BodyParser(formdata); err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 
 	if !formdata.CheckIsNotNull() {
-		return respError(ctx, "Одно из полей пустое")
+		return errors.RespError(ctx, "Одно из полей пустое")
 	}
 
 	// Проверка на существование пользователя
 	rows, err := db.Query("SELECT COUNT(*) AS count FROM users WHERE email = $1", formdata.Email)
 	if err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 	defer rows.Close()
 	count, err := checkCount(rows)
 	if err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 	if count > 0 {
-		return respError(ctx, "Пользователь с таким Email уже существует")
+		return errors.RespError(ctx, "Пользователь с таким Email уже существует")
 	}
 
 	// Хэширование пароля
@@ -78,7 +80,7 @@ func register(ctx *fiber.Ctx, db *sql.DB) error {
 	hashedBytes, err := bcrypt.GenerateFromPassword(saltedBytes, bcrypt.DefaultCost)
 	if err != nil {
 		log.Println(err.Error())
-		return respError(ctx, "Ошибка с авторизацией на стороне сервера 553")
+		return errors.RespError(ctx, "Ошибка с авторизацией на стороне сервера 553")
 	}
 	hash := string(hashedBytes[:])
 
@@ -86,7 +88,7 @@ func register(ctx *fiber.Ctx, db *sql.DB) error {
 	_, err = db.Query("INSERT INTO users (first_name, second_name, middle_name, email, password, perms) VALUES ($1, $2, $3, $4, $5, 0)",
 		formdata.FirstName, formdata.LastName, formdata.MiddleName, formdata.Email, hash)
 	if err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 
 	// Сразу входим
@@ -106,15 +108,15 @@ func checkCount(rows *sql.Rows) (count int, err error) {
 	return count, nil
 }
 
-func login_form(ctx *fiber.Ctx, db *sql.DB) error {
+func LoginFormController(ctx *fiber.Ctx, db *sql.DB) error {
 	formdata := new(LoginForm)
 
 	if err := ctx.BodyParser(formdata); err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 
 	if !formdata.CheckIsNotNull() {
-		return respError(ctx, "Одно из полей пустое")
+		return errors.RespError(ctx, "Одно из полей пустое")
 	}
 
 	return login(ctx, db, formdata)
@@ -124,15 +126,15 @@ func login(ctx *fiber.Ctx, db *sql.DB, form *LoginForm) error {
 	// Проверка на существование пользователя
 	rows, err := db.Query("SELECT COUNT(*) AS count FROM users WHERE email = $1", form.Email)
 	if err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 	defer rows.Close()
 	count, err := checkCount(rows)
 	if err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 	if count == 0 {
-		return respError(ctx, "Пользователя с таким Email не существует")
+		return errors.RespError(ctx, "Пользователя с таким Email не существует")
 	}
 
 	// Получаем данные и проверяем пароли
@@ -142,14 +144,14 @@ func login(ctx *fiber.Ctx, db *sql.DB, form *LoginForm) error {
 	var hashed_pass string
 	err = row.Scan(&email, &hashed_pass)
 	if err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 
 	incoming := []byte(form.Password)
 	existing := []byte(hashed_pass)
 	err = bcrypt.CompareHashAndPassword(existing, incoming)
 	if err != nil {
-		return respError(ctx, "Пароль неверный")
+		return errors.RespError(ctx, "Пароль неверный")
 	}
 
 	// Создаем access_token
@@ -158,19 +160,19 @@ func login(ctx *fiber.Ctx, db *sql.DB, form *LoginForm) error {
 	hasher := md5.New()
 	_, err = hasher.Write(existing)
 	if err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 
 	_, err = hasher.Write([]byte(strconv.Itoa(int(timestamp))))
 	if err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 
 	token := hex.EncodeToString(hasher.Sum(nil))
 
 	_, err = db.Query("INSERT INTO tokens (users_id, access_token) VALUES ($1, $2)", email, token)
 	if err != nil {
-		return respError(ctx, err.Error())
+		return errors.RespError(ctx, err.Error())
 	}
 
 	return ctx.JSON(&fiber.Map{

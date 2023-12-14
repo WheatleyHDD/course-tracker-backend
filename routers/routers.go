@@ -5,6 +5,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"course-tracker/controllers/auth"
+
 	_ "github.com/lib/pq"
 )
 
@@ -24,10 +26,10 @@ func Route(app *fiber.App, db *sql.DB) {
 	// ======= Авторизация =======
 	// ===========================
 	app.Post(apiUrl+"login", func(c *fiber.Ctx) error {
-		return login_form(c, db)
+		return auth.LoginFormController(c, db)
 	})
 	app.Post(apiUrl+"register", func(c *fiber.Ctx) error {
-		return register(c, db)
+		return auth.Register(c, db)
 	})
 
 	/*
