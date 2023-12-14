@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"course-tracker/controllers/applications"
 	"course-tracker/controllers/auth"
 
 	_ "github.com/lib/pq"
@@ -32,20 +33,12 @@ func Route(app *fiber.App, db *sql.DB) {
 		return auth.Register(c, db)
 	})
 
-	/*
-		app.Get(apiUrl+"test", func(c *fiber.Ctx) error {
-			return c.JSON(fiber.Map{
-				"su": "Grame",
-				"age": fiber.Map{
-					"name": "Grame",
-					"age":  20,
-				},
-			})
-		})*/
-
 	// ===========================
 	// ==== Работа с заявками ====
 	// ===========================
+	app.Post(apiUrl+"user-applications", func(c *fiber.Ctx) error {
+		return applications.UserApplications(c, db)
+	})
 }
 
 func DocsRoute(app *fiber.App) {

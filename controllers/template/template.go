@@ -11,6 +11,10 @@ import (
 // ==========================
 // === Структуры для форм ===
 // ==========================
+type AccessTokenForm struct {
+	AccessToken string `form:"access_token"`
+}
+
 type TemplateForm struct {
 }
 

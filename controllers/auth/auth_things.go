@@ -28,7 +28,7 @@ type Hash struct{}
 // ==========================
 type RegisterForm struct {
 	FirstName  string `form:"first_name"`
-	LastName   string `form:"last_name"`
+	LastName   string `form:"second_name"`
 	MiddleName string `form:"middle_name"`
 	Email      string `form:"email"`
 	Password   string `form:"password"`
