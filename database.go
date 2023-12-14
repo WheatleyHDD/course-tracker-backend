@@ -13,9 +13,9 @@ var (
 )
 
 func connectDB() {
-	hostname := "localhost"
+	hostname := "172.23.107.106"
 	username := "dvolkov"
-	password := ""
+	password := "unity020kek"
 	database := "course-tracker"
 	sslMode := "disable"
 

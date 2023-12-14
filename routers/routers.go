@@ -24,12 +24,20 @@ func Route(app *fiber.App, db *sql.DB) {
 	// ======= Авторизация =======
 	// ===========================
 	app.Post(apiUrl+"login", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
+		return register(c, db)
 	})
 	app.Post(apiUrl+"register", func(c *fiber.Ctx) error {
-		// данные которые получаем
-		//
-		return c.SendString("Hello, World!")
+		return login_form(c, db)
+	})
+
+	app.Get(apiUrl+"test", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"name": "Grame",
+			"age": fiber.Map{
+				"name": "Grame",
+				"age":  20,
+			},
+		})
 	})
 
 	// ===========================

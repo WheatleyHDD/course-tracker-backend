@@ -70,14 +70,17 @@ func register(ctx *fiber.Ctx, db *sql.DB) error {
 	hash := string(hashedBytes[:])
 
 	// Запись в базу
-	_, err = db.Query("INSERT INTO `users` (first_name, last_name, middle_name, email, password) VALUES ($1, $2, $3, $4, $5)",
+	_, err = db.Query("INSERT INTO `users` (first_name, last_name, middle_name, email, password, perms) VALUES ($1, $2, $3, $4, $5, 0)",
 		formdata.FirstName, formdata.LastName, formdata.MiddleName, formdata.Email, hash)
 	if err != nil {
 		return respError(ctx, err.Error())
 	}
 
 	// Сразу входим
-	return nil
+	logindata := new(LoginForm)
+	logindata.Email = formdata.Email
+	logindata.Password = formdata.Password
+	return login(ctx, db, logindata)
 }
 
 func checkCount(rows *sql.Rows) (count int, err error) {
@@ -90,15 +93,19 @@ func checkCount(rows *sql.Rows) (count int, err error) {
 	return count, nil
 }
 
-func login(ctx *fiber.Ctx, db *sql.DB) error {
+func login_form(ctx *fiber.Ctx, db *sql.DB) error {
 	formdata := new(LoginForm)
 
 	if err := ctx.BodyParser(formdata); err != nil {
 		return respError(ctx, err.Error())
 	}
 
+	return login(ctx, db, formdata)
+}
+
+func login(ctx *fiber.Ctx, db *sql.DB, form *LoginForm) error {
 	// Проверка на существование пользователя
-	rows, err := db.Query("SELECT COUNT(*) AS count FROM `users` WHERE 'email' = $1", formdata.Email)
+	rows, err := db.Query("SELECT COUNT(*) AS count FROM `users` WHERE 'email' = $1", form.Email)
 	if err != nil {
 		return respError(ctx, err.Error())
 	}
@@ -112,7 +119,7 @@ func login(ctx *fiber.Ctx, db *sql.DB) error {
 	}
 
 	// Получаем данные и проверяем пароли
-	rows, err = db.Query("SELECT email, password FROM `users` WHERE 'email' = $1", formdata.Email)
+	rows, err = db.Query("SELECT email, password FROM `users` WHERE 'email' = $1", form.Email)
 	if err != nil {
 		return respError(ctx, err.Error())
 	}
@@ -122,7 +129,7 @@ func login(ctx *fiber.Ctx, db *sql.DB) error {
 	var hashed_pass string
 	rows.Scan(&email, &hashed_pass)
 
-	incoming := []byte(formdata.Email)
+	incoming := []byte(form.Password)
 	existing := []byte(hashed_pass)
 	err = bcrypt.CompareHashAndPassword(existing, incoming)
 	if err != nil {
@@ -139,4 +146,15 @@ func login(ctx *fiber.Ctx, db *sql.DB) error {
 		return respError(ctx, err.Error())
 	}
 	token := hex.EncodeToString(hasher.Sum([]byte(strconv.Itoa(int(timestamp)))))
+
+	_, err = db.Query("INSERT INTO `tokens` (users_id, access_token) VALUES ($1, $2)", email, token)
+	if err != nil {
+		return respError(ctx, err.Error())
+	}
+
+	return ctx.JSON(&fiber.Map{
+		"success":      true,
+		"email":        email,
+		"access_token": token,
+	})
 }
