@@ -9,8 +9,9 @@ import (
 func main() {
 	app := fiber.New()
 
-	connectDB()
+	ConnectDB()
 	routers.Route(app, Db)
+	defer Db.Close()
 
 	app.Listen(":3000")
 }

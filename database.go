@@ -12,8 +12,8 @@ var (
 	Db *sql.DB
 )
 
-func connectDB() {
-	hostname := "172.23.107.106"
+func ConnectDB() {
+	hostname := "localhost"
 	username := "dvolkov"
 	password := "unity020kek"
 	database := "course-tracker"
@@ -24,10 +24,11 @@ func connectDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	Db = db
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
+	/*
+		err = Db.Ping()
+		if err != nil {
+			log.Fatal(err)
+		}*/
 }
