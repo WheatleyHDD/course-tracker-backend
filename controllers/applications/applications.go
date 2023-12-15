@@ -247,9 +247,27 @@ func EditApplication(ctx *fiber.Ctx, db *sql.DB) error {
 		return errors.RespError(ctx, err.Error())
 	}
 
+	// Получение данных пользователя
+	user, errs := utils.GetUser(form.AccessToken, db)
+	if user == nil {
+		if errs == "" {
+			return errors.RespError(ctx, "Недействительный access_token")
+		}
+		return errors.RespError(ctx, errs)
+	}
+
 	appid, err := ctx.ParamsInt("id", 0)
 	if err != nil {
 		return errors.RespError(ctx, "Неверный параметр \"id\"")
+	}
+
+	// Можно ли менять заявку?
+	if user.Perms == 0 {
+		result := db.QueryRow("SELECT id FROM cources_and_statuses WHERE id = $1 AND student = $2 LIMIT 1", appid, user.Email)
+		err = result.Scan(&appid)
+		if err != nil {
+			return errors.RespError(ctx, "Ошибка получения данных из БД: "+err.Error())
+		}
 	}
 
 	// Ищем измененные поля
