@@ -24,6 +24,16 @@ type UserApplicationsForm struct {
 	utils.ListTags
 }
 
+type AddApplicationForm struct {
+	StudentEmail string `query:"student_email" form:"student_email"`
+	CourseName   string `query:"course_name" form:"course_name"`
+	Cost         int    `query:"cost" form:"cost"`
+	StartDate    string `query:"start_date" form:"start_date"`
+	EndDate      string `query:"end_date" form:"end_date"`
+	Point        string `query:"point" form:"point"`
+	utils.AccessTokenForm
+}
+
 // ==================================
 // ===  Вспомогательные структуры ===
 // ==================================
@@ -108,4 +118,155 @@ func UserApplications(ctx *fiber.Ctx, db *sql.DB) error {
 	}
 
 	return ctx.SendString(string(response))
+}
+
+// ================ /api/user-applications/add ================
+func AddApplication(ctx *fiber.Ctx, db *sql.DB) error {
+	// Получение параметров
+	form := new(AddApplicationForm)
+	if err := ctx.BodyParser(form); err != nil {
+		return errors.RespError(ctx, err.Error())
+	}
+
+	// Проверка на валидность
+	if form.CourseName == "" || form.Cost == 0 || form.StartDate == "" || form.EndDate == "" ||
+		form.Point == "" || form.StudentEmail == "" || form.AccessToken == "" {
+		return errors.RespError(ctx, "Одно или несколько полей незаполнено")
+	}
+
+	// Получение данных пользователя
+	user, errs := utils.GetUser(form.AccessToken, db)
+	if user == nil {
+		if errs == "" {
+			return errors.RespError(ctx, "Недействительный access_token")
+		}
+		return errors.RespError(ctx, errs)
+	}
+
+	if user.Perms == 0 {
+		form.StudentEmail = user.Email
+	}
+
+	// Конвертируем даты
+	start_date, err := time.Parse("2006-01-02", form.StartDate)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка конвертации даты")
+	}
+	end_date, err := time.Parse("2006-01-02", form.EndDate)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка конвертации даты")
+	}
+	if end_date.Sub(start_date) <= 0 {
+		return errors.RespError(ctx, "Неверный временной диапазон")
+	}
+
+	// Запись в базу
+	_, err = db.Query("INSERT INTO course_applications (course_name, student, cost, start_date, end_date, point) VALUES ($1, $2, $3, $4, $5, $6)",
+		form.CourseName, form.StudentEmail, form.Cost, start_date, end_date, form.Point)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка записи в БД: "+err.Error())
+	}
+
+	// Получаем айдишник последней заявки
+	var last_id int64
+	row := db.QueryRow("SELECT id FROM course_applications WHERE student = $1 ORDER BY id DESC LIMIT 1", form.StudentEmail)
+	err = row.Scan(&last_id)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка получения последнего айдишника: "+err.Error())
+	}
+
+	// Ставим статус заявки на "На согласовании"
+	_, err = db.Query("INSERT INTO statuses (application_id, changer, change_date, status) VALUES ($1, $2, $3, $4)", last_id, user.Email, time.Now(), 0)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка записи статуса в БД: "+err.Error())
+	}
+
+	return ctx.JSON(&fiber.Map{
+		"success": true,
+		"response": &fiber.Map{
+			"application_id": last_id,
+		},
+	})
+}
+
+// ================ /api/applications/:id ================
+func GetApplication(ctx *fiber.Ctx, db *sql.DB) error {
+	// Получение параметров
+	form := new(utils.AccessTokenForm)
+	if err := ctx.BodyParser(form); err != nil {
+		return errors.RespError(ctx, err.Error())
+	}
+
+	// Получение данных пользователя
+	user, errs := utils.GetUser(form.AccessToken, db)
+	if user == nil {
+		if errs == "" {
+			return errors.RespError(ctx, "Недействительный access_token")
+		}
+		return errors.RespError(ctx, errs)
+	}
+
+	appid, err := ctx.ParamsInt("id", 0)
+	if err != nil {
+		return errors.RespError(ctx, "Неверный параметр \"id\"")
+	}
+
+	// Получаем данные из БД
+	var result *sql.Row
+	application := new(Application)
+	if user.Perms == 0 {
+		result = db.QueryRow("SELECT * FROM cources_and_statuses WHERE id = $1 AND student = $2 LIMIT 1", appid, user.Email)
+	} else {
+		result = db.QueryRow("SELECT * FROM cources_and_statuses WHERE id = $1 LIMIT 1", appid)
+	}
+	err = result.Scan(&application.ID, &application.CourseName, &application.Student, &application.Cost, &application.StartDate, &application.EndDate, &application.Point, &application.Status, &application.Changer, &application.ChangeDate)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка получения данных из БД: "+err.Error())
+	}
+
+	return ctx.JSON(&fiber.Map{
+		"success":  true,
+		"response": application,
+	})
+}
+
+// ================ /api/applications/edit/:id ================
+func EditApplication(ctx *fiber.Ctx, db *sql.DB) error {
+	// Получение параметров
+	form := new(utils.AccessTokenForm)
+	if err := ctx.BodyParser(form); err != nil {
+		return errors.RespError(ctx, err.Error())
+	}
+
+	// Получение данных пользователя
+	user, errs := utils.GetUser(form.AccessToken, db)
+	if user == nil {
+		if errs == "" {
+			return errors.RespError(ctx, "Недействительный access_token")
+		}
+		return errors.RespError(ctx, errs)
+	}
+
+	appid, err := ctx.ParamsInt("id", 0)
+	if err != nil {
+		return errors.RespError(ctx, "Неверный параметр \"id\"")
+	}
+
+	// Получаем данные из БД
+	var result *sql.Row
+	application := new(Application)
+	if user.Perms == 0 {
+		result = db.QueryRow("SELECT * FROM cources_and_statuses WHERE id = $1 AND student = $2 LIMIT 1", appid, user.Email)
+	} else {
+		result = db.QueryRow("SELECT * FROM cources_and_statuses WHERE id = $1 LIMIT 1", appid)
+	}
+	err = result.Scan(&application.ID, &application.CourseName, &application.Student, &application.Cost, &application.StartDate, &application.EndDate, &application.Point, &application.Status, &application.Changer, &application.ChangeDate)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка получения данных из БД: "+err.Error())
+	}
+
+	return ctx.JSON(&fiber.Map{
+		"success":  true,
+		"response": application,
+	})
 }
