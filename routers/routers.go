@@ -46,6 +46,9 @@ func Route(app *fiber.App, db *sql.DB) {
 	app.Post(apiUrl+"applications/:id", func(c *fiber.Ctx) error {
 		return applications.GetApplication(c, db)
 	})
+	app.Post(apiUrl+"applications/edit/:id", func(c *fiber.Ctx) error {
+		return applications.EditApplication(c, db)
+	})
 }
 
 func DocsRoute(app *fiber.App) {

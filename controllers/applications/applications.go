@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"course-tracker/controllers/errors"
 	utils "course-tracker/controllers/utils"
@@ -49,6 +50,14 @@ type Application struct {
 	Status     int       `json:"status"`
 	Changer    string    `json:"changer"`
 	ChangeDate time.Time `json:"change_date"`
+}
+
+type ApplicationData struct {
+	course_name string
+	cost        int
+	start_date  string
+	end_date    string
+	point       string
 }
 
 type ResponseStruct struct {
@@ -233,18 +242,9 @@ func GetApplication(ctx *fiber.Ctx, db *sql.DB) error {
 // ================ /api/applications/edit/:id ================
 func EditApplication(ctx *fiber.Ctx, db *sql.DB) error {
 	// Получение параметров
-	form := new(utils.AccessTokenForm)
+	form := new(AddApplicationForm)
 	if err := ctx.BodyParser(form); err != nil {
 		return errors.RespError(ctx, err.Error())
-	}
-
-	// Получение данных пользователя
-	user, errs := utils.GetUser(form.AccessToken, db)
-	if user == nil {
-		if errs == "" {
-			return errors.RespError(ctx, "Недействительный access_token")
-		}
-		return errors.RespError(ctx, errs)
 	}
 
 	appid, err := ctx.ParamsInt("id", 0)
@@ -252,21 +252,43 @@ func EditApplication(ctx *fiber.Ctx, db *sql.DB) error {
 		return errors.RespError(ctx, "Неверный параметр \"id\"")
 	}
 
-	// Получаем данные из БД
-	var result *sql.Row
-	application := new(Application)
-	if user.Perms == 0 {
-		result = db.QueryRow("SELECT * FROM cources_and_statuses WHERE id = $1 AND student = $2 LIMIT 1", appid, user.Email)
-	} else {
-		result = db.QueryRow("SELECT * FROM cources_and_statuses WHERE id = $1 LIMIT 1", appid)
+	// Ищем измененные поля
+	custom := ApplicationData{
+		course_name: form.CourseName,
+		cost:        form.Cost,
+		start_date:  form.StartDate,
+		end_date:    form.EndDate,
+		point:       form.Point,
 	}
-	err = result.Scan(&application.ID, &application.CourseName, &application.Student, &application.Cost, &application.StartDate, &application.EndDate, &application.Point, &application.Status, &application.Changer, &application.ChangeDate)
-	if err != nil {
-		return errors.RespError(ctx, "Ошибка получения данных из БД: "+err.Error())
+
+	value := reflect.ValueOf(custom)
+	numFields := value.NumField()
+	structType := value.Type()
+
+	for i := 0; i < numFields; i++ {
+		fieldValue := value.Field(i)
+
+		if fieldValue.IsZero() {
+			continue
+		}
+
+		sql := fmt.Sprintf("UPDATE course_applications SET %s = $1 WHERE id = $2", structType.Field(i).Name)
+
+		if structType.Field(i).Type.Name() == "int" {
+			_, err = db.Query(sql, fieldValue.Int(), appid)
+		} else {
+			_, err = db.Query(sql, fieldValue.String(), appid)
+		}
+		if err != nil {
+			fmt.Println(err)
+			return errors.RespError(ctx, "Проблема с обновлением параметра \""+structType.Field(i).Name+"\"")
+		}
 	}
 
 	return ctx.JSON(&fiber.Map{
-		"success":  true,
-		"response": application,
+		"success": true,
+		"response": &fiber.Map{
+			"application_id": appid,
+		},
 	})
 }
