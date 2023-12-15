@@ -38,7 +38,6 @@ type AddApplicationForm struct {
 // ==================================
 // ===  Вспомогательные структуры ===
 // ==================================
-type TemplateResponse struct{}
 type Application struct {
 	ID         int64     `json:"id"`
 	CourseName string    `json:"course_name"`
@@ -58,11 +57,6 @@ type ApplicationData struct {
 	start_date  string
 	end_date    string
 	point       string
-}
-
-type ResponseStruct struct {
-	Success  bool  `json:"success"`
-	Response []any `json:"response"`
 }
 
 // ==========================
@@ -120,7 +114,7 @@ func UserApplications(ctx *fiber.Ctx, db *sql.DB) error {
 	}
 
 	// Формируем JSON ответ
-	r := &ResponseStruct{true, courses}
+	r := &utils.ResponseStruct{Success: true, Response: courses}
 	response, err := json.Marshal(r)
 	if err != nil {
 		return errors.RespError(ctx, "Ошибка формирования JSON ответа")
@@ -206,6 +200,11 @@ func GetApplication(ctx *fiber.Ctx, db *sql.DB) error {
 		return errors.RespError(ctx, err.Error())
 	}
 
+	appid, err := ctx.ParamsInt("id", 0)
+	if err != nil {
+		return errors.RespError(ctx, "Неверный параметр \"id\"")
+	}
+
 	// Получение данных пользователя
 	user, errs := utils.GetUser(form.AccessToken, db)
 	if user == nil {
@@ -213,11 +212,6 @@ func GetApplication(ctx *fiber.Ctx, db *sql.DB) error {
 			return errors.RespError(ctx, "Недействительный access_token")
 		}
 		return errors.RespError(ctx, errs)
-	}
-
-	appid, err := ctx.ParamsInt("id", 0)
-	if err != nil {
-		return errors.RespError(ctx, "Неверный параметр \"id\"")
 	}
 
 	// Получаем данные из БД

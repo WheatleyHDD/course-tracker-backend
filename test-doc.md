@@ -81,13 +81,12 @@
 
 ### Получить историю статусов заявок
 
-`POST /api/statuses`
-- `application_id` - Идентификатор заявки
+`POST /api/statuses/:id`
 Необязательные параметры:
 - `limit` - Количество записей от 10 до 100 (по умолчанию 10)
 - `page` - Страница записей
 
 ### Изменить статус заявки
 
-`POST /api/statuses/edit`
-- `application_id` - Идентификатор заявки
+`POST /api/statuses/edit/:id`
+- `status` - Статус

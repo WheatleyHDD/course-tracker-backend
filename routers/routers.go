@@ -7,6 +7,7 @@ import (
 
 	"course-tracker/controllers/applications"
 	"course-tracker/controllers/auth"
+	"course-tracker/controllers/statuses"
 
 	_ "github.com/lib/pq"
 )
@@ -48,6 +49,16 @@ func Route(app *fiber.App, db *sql.DB) {
 	})
 	app.Post(apiUrl+"applications/edit/:id", func(c *fiber.Ctx) error {
 		return applications.EditApplication(c, db)
+	})
+
+	// =============================
+	// ==== Работа со статусами ====
+	// =============================
+	app.Post(apiUrl+"statuses/:id", func(c *fiber.Ctx) error {
+		return statuses.GetStatuses(c, db)
+	})
+	app.Post(apiUrl+"statuses/edit/:id", func(c *fiber.Ctx) error {
+		return statuses.GetStatuses(c, db)
 	})
 }
 

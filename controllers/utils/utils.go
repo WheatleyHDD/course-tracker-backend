@@ -28,6 +28,11 @@ type Users struct {
 	Perms      int    `form:"perms"`
 }
 
+type ResponseStruct struct {
+	Success  bool  `json:"success"`
+	Response []any `json:"response"`
+}
+
 // ==========================
 // ======== Методы ==========
 // ==========================
