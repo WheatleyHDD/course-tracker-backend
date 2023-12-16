@@ -5,5 +5,4 @@ LEFT JOIN (
 	FROM statuses sd
 	GROUP BY sd.application_id
 ) sids ON sids.application_id = apps.id
-LEFT JOIN statuses s ON s.id = sids.id
-ORDER BY id ASC LIMIT 100;
+LEFT JOIN statuses s ON s.id = sids.id;

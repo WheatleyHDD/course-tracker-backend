@@ -19,6 +19,11 @@ import (
 // ==========================
 // === Структуры для форм ===
 // ==========================
+type GetAllApplicationsForm struct {
+	utils.AccessTokenForm
+	utils.ListTags
+}
+
 type UserApplicationsForm struct {
 	StudentEmail string `query:"student_email" form:"student_email"`
 	utils.AccessTokenForm
@@ -303,4 +308,54 @@ func EditApplication(ctx *fiber.Ctx, db *sql.DB) error {
 			"application_id": appid,
 		},
 	})
+}
+
+// ================ /api/applications ================
+func GetApplications(ctx *fiber.Ctx, db *sql.DB) error {
+	// Получение параметров
+	form := new(GetAllApplicationsForm)
+	if err := ctx.BodyParser(form); err != nil {
+		return errors.RespError(ctx, err.Error())
+	}
+
+	// Получение данных пользователя
+	user, errs := utils.GetUser(form.AccessToken, db)
+	if user == nil {
+		if errs == "" {
+			return errors.RespError(ctx, "Недействительный access_token")
+		}
+		return errors.RespError(ctx, errs)
+	}
+
+	if user.Perms == 0 {
+		return errors.RespError(ctx, "Нет доступа")
+	}
+
+	// Получаем данные из БД
+	rows, err := db.Query("SELECT * FROM cources_and_statuses ORDER BY id ASC LIMIT $1 OFFSET $2", form.Limit, form.Page*form.Limit)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка в запросе к БД: "+err.Error())
+	}
+	defer rows.Close()
+
+	// Создаем массив из записей
+	var courses []any
+	for rows.Next() {
+		course := &Application{}
+		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &course.Status, &course.Changer, &course.ChangeDate)
+		if err != nil {
+			fmt.Println(err)
+			return errors.RespError(ctx, "Ошибка в формировании списка")
+		}
+		courses = append(courses, course)
+	}
+
+	// Формируем JSON ответ
+	r := &utils.ResponseStruct{Success: true, Response: courses}
+	response, err := json.Marshal(r)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка формирования JSON ответа")
+	}
+
+	return ctx.SendString(string(response))
 }
