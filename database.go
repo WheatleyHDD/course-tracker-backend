@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -14,9 +15,9 @@ var (
 
 func ConnectDB() {
 	hostname := "localhost"
-	username := "dvolkov"
-	password := "unity020kek"
-	database := "course-tracker"
+	username := os.Getenv("DBUSER")
+	password := os.Getenv("DBPASSWORD")
+	database := os.Getenv("DBNAME")
 	sslMode := "disable"
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", username, password, hostname, database, sslMode)
