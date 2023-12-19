@@ -7,6 +7,7 @@ import (
 
 	"course-tracker/controllers/applications"
 	"course-tracker/controllers/auth"
+	"course-tracker/controllers/comments"
 	"course-tracker/controllers/statuses"
 	"course-tracker/controllers/users"
 
@@ -60,6 +61,16 @@ func Route(app *fiber.App, db *sql.DB) {
 	})
 	app.Post(apiUrl+"statuses/edit/:id", func(c *fiber.Ctx) error {
 		return statuses.GetStatuses(c, db)
+	})
+
+	// =============================
+	// ======== Комментарии ========
+	// =============================
+	app.Post(apiUrl+"comments/:application_id", func(c *fiber.Ctx) error {
+		return comments.GetComments(c, db)
+	})
+	app.Post(apiUrl+"comments/:application_id/add", func(c *fiber.Ctx) error {
+		return comments.AddComment(c, db)
 	})
 
 	// =============================

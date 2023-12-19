@@ -47,6 +47,14 @@ type Application struct {
 	ChangeDate time.Time `json:"change_date"`
 }
 
+type Comment struct {
+	ID            int64     `json:"id"`
+	ApplicationID int64     `json:"application_id"`
+	Sender        string    `json:"sender"`
+	CommsTime     time.Time `json:"comms_time"`
+	Text          string    `json:"text"`
+}
+
 // ==========================
 // ======== Методы ==========
 // ==========================
