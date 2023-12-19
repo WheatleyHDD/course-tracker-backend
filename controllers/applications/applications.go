@@ -43,19 +43,6 @@ type AddApplicationForm struct {
 // ==================================
 // ===  Вспомогательные структуры ===
 // ==================================
-type Application struct {
-	ID         int64     `json:"id"`
-	CourseName string    `json:"course_name"`
-	Student    string    `json:"student"`
-	Cost       int       `json:"cost"`
-	StartDate  time.Time `json:"start_date"`
-	EndDate    time.Time `json:"end_date"`
-	Point      string    `json:"point"`
-	Status     int       `json:"status"`
-	Changer    string    `json:"changer"`
-	ChangeDate time.Time `json:"change_date"`
-}
-
 type ApplicationData struct {
 	course_name string
 	cost        int
@@ -109,7 +96,7 @@ func UserApplications(ctx *fiber.Ctx, db *sql.DB) error {
 	// Создаем массив из записей
 	var courses []any
 	for rows.Next() {
-		course := &Application{}
+		course := &utils.Application{}
 		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &course.Status, &course.Changer, &course.ChangeDate)
 		if err != nil {
 			fmt.Println(err)
@@ -219,17 +206,9 @@ func GetApplication(ctx *fiber.Ctx, db *sql.DB) error {
 		return errors.RespError(ctx, errs)
 	}
 
-	// Получаем данные из БД
-	var result *sql.Row
-	application := new(Application)
-	if user.Perms == 0 {
-		result = db.QueryRow("SELECT * FROM cources_and_statuses WHERE id = $1 AND student = $2 LIMIT 1", appid, user.Email)
-	} else {
-		result = db.QueryRow("SELECT * FROM cources_and_statuses WHERE id = $1 LIMIT 1", appid)
-	}
-	err = result.Scan(&application.ID, &application.CourseName, &application.Student, &application.Cost, &application.StartDate, &application.EndDate, &application.Point, &application.Status, &application.Changer, &application.ChangeDate)
+	application, err := utils.GetApplication(appid, user, db)
 	if err != nil {
-		return errors.RespError(ctx, "Ошибка получения данных из БД: "+err.Error())
+		return errors.RespError(ctx, "Ошибка получения заявок: "+err.Error())
 	}
 
 	return ctx.JSON(&fiber.Map{
@@ -341,7 +320,7 @@ func GetApplications(ctx *fiber.Ctx, db *sql.DB) error {
 	// Создаем массив из записей
 	var courses []any
 	for rows.Next() {
-		course := &Application{}
+		course := &utils.Application{}
 		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &course.Status, &course.Changer, &course.ChangeDate)
 		if err != nil {
 			fmt.Println(err)
