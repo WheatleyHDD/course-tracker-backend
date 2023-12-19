@@ -170,3 +170,29 @@
 - `application_id` - идентификатор заявки
 
 ## Пользователи
+
+### Получить профиль текущего пользователя
+
+`POST /api/profile`
+
+Ответ в `response`:
+
+- `first_name` - Имя
+- `second_name` - Фамилия
+- `middle_name` - Отчество
+- `email` - E-mail
+- `token` - access_token
+
+### Получить профиль пользователя
+
+`POST /api/profile/:email`
+
+Обязательный параметр:
+- `email` - E-mail пользователя
+
+Ответ в `response`:
+
+- `first_name` - Имя
+- `second_name` - Фамилия
+- `middle_name` - Отчество
+- `email` - E-mail
