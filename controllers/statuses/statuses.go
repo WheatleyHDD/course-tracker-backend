@@ -22,7 +22,7 @@ type StatusesList struct {
 	utils.ListTags
 }
 type StatusesChangeForm struct {
-	Status string `query:"status" form:"status"`
+	Status string `query:"status" form:"status" json:"status"`
 	utils.AccessTokenForm
 }
 

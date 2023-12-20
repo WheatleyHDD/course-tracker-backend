@@ -13,20 +13,20 @@ import (
 // === Структуры для форм ===
 // ==========================
 type AccessTokenForm struct {
-	AccessToken string `query:"access_token" form:"access_token"`
+	AccessToken string `query:"access_token" form:"access_token" json:"access_token"`
 }
 
 type ListTags struct {
-	Limit int `query:"limit" form:"limit"`
-	Page  int `query:"page" form:"page"`
+	Limit int `query:"limit" form:"limit" json:"limit"`
+	Page  int `query:"page" form:"page" json:"page"`
 }
 
 type Users struct {
-	Email      string `form:"email"`
-	FirstName  string `form:"first_name"`
-	SecondName string `form:"second_name"`
-	MiddleName string `form:"middle_name"`
-	Perms      int    `form:"perms"`
+	Email      string `form:"email" json:"email"`
+	FirstName  string `form:"first_name" json:"first_name"`
+	SecondName string `form:"second_name" json:"second_name"`
+	MiddleName string `form:"middle_name" json:"middle_name"`
+	Perms      int    `form:"perms" json:"perms"`
 }
 
 type ResponseStruct struct {
@@ -64,7 +64,7 @@ func GetUser(token string, db *sql.DB) (user *Users, errorText string) {
 	userdata := new(Users)
 	err := row.Scan(&userdata.Email, &userdata.FirstName, &userdata.SecondName, &userdata.MiddleName, &userdata.Perms)
 	if err != nil {
-		return nil, err.Error()
+		return nil, "Ошибка получения профиля текущего пользователя" + err.Error()
 	}
 	if userdata.Email == "" {
 		return nil, ""

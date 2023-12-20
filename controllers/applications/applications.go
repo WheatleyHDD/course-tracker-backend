@@ -25,18 +25,18 @@ type GetAllApplicationsForm struct {
 }
 
 type UserApplicationsForm struct {
-	StudentEmail string `query:"student_email" form:"student_email"`
+	StudentEmail string `query:"student_email" form:"student_email" json:"student_email"`
 	utils.AccessTokenForm
 	utils.ListTags
 }
 
 type AddApplicationForm struct {
-	StudentEmail string `query:"student_email" form:"student_email"`
-	CourseName   string `query:"course_name" form:"course_name"`
-	Cost         int    `query:"cost" form:"cost"`
-	StartDate    string `query:"start_date" form:"start_date"`
-	EndDate      string `query:"end_date" form:"end_date"`
-	Point        string `query:"point" form:"point"`
+	StudentEmail string `query:"student_email" form:"student_email" json:"student_email"`
+	CourseName   string `query:"course_name" form:"course_name" json:"course_name"`
+	Cost         int    `query:"cost" form:"cost" json:"cost"`
+	StartDate    string `query:"start_date" form:"start_date" json:"start_date"`
+	EndDate      string `query:"end_date" form:"end_date" json:"end_date"`
+	Point        string `query:"point" form:"point" json:"point"`
 	utils.AccessTokenForm
 }
 

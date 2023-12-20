@@ -15,7 +15,7 @@ import (
 // === Структуры для форм ===
 // ==========================
 type AddCommentForm struct {
-	Message string `query:"message" form:"message"`
+	Message string `query:"message" form:"message" json:"message"`
 	utils.AccessTokenForm
 }
 

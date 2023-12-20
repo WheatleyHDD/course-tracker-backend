@@ -27,16 +27,16 @@ type Hash struct{}
 // === Структуры для форм ===
 // ==========================
 type RegisterForm struct {
-	FirstName  string `form:"first_name"`
-	LastName   string `form:"second_name"`
-	MiddleName string `form:"middle_name"`
-	Email      string `form:"email"`
-	Password   string `form:"password"`
+	FirstName  string `form:"first_name" json:"first_name"`
+	LastName   string `form:"second_name" json:"second_name"`
+	MiddleName string `form:"middle_name" json:"middle_name"`
+	Email      string `form:"email" json:"email"`
+	Password   string `form:"password" json:"password"`
 }
 
 type LoginForm struct {
-	Email    string `form:"email"`
-	Password string `form:"password"`
+	Email    string `form:"email" json:"email"`
+	Password string `form:"password" json:"password"`
 }
 
 func (r *RegisterForm) CheckIsNotNull() bool {

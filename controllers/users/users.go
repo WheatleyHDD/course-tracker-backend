@@ -35,6 +35,9 @@ func GetProfile(ctx *fiber.Ctx, db *sql.DB) error {
 			if errs == "" {
 				return errors.RespError(ctx, "Недействительный access_token")
 			}
+			// ХУЙня не работает
+			// Почини, хуесос
+			// Говно уебищное
 			return errors.RespError(ctx, errs)
 		}
 
