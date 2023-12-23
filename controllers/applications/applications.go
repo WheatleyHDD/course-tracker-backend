@@ -310,6 +310,11 @@ func GetApplications(ctx *fiber.Ctx, db *sql.DB) error {
 		return errors.RespError(ctx, "Нет доступа")
 	}
 
+	// Перевод в дефолтные значения
+	if form.Limit == 0 {
+		form.Limit = 10
+	}
+
 	// Получаем данные из БД
 	rows, err := db.Query("SELECT * FROM cources_and_statuses ORDER BY id ASC LIMIT $1 OFFSET $2", form.Limit, form.Page*form.Limit)
 	if err != nil {
