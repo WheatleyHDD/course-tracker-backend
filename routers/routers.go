@@ -53,6 +53,10 @@ func Route(app *fiber.App, db *sql.DB) {
 		return applications.EditApplication(c, db)
 	})
 
+	app.Post(apiUrl+"applications", func(c *fiber.Ctx) error {
+		return applications.GetApplications(c, db)
+	})
+
 	// =============================
 	// ==== Работа со статусами ====
 	// =============================
