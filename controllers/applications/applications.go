@@ -100,7 +100,8 @@ func UserApplications(ctx *fiber.Ctx, db *sql.DB) error {
 		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &course.Status, &course.Changer, &course.ChangeDate)
 		if err != nil {
 			fmt.Println(err)
-			return errors.RespError(ctx, "Ошибка в формировании списка")
+			continue
+			// return errors.RespError(ctx, "Ошибка в формировании списка")
 		}
 		courses = append(courses, course)
 	}
