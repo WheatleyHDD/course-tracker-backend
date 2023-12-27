@@ -97,7 +97,7 @@ func UserApplications(ctx *fiber.Ctx, db *sql.DB) error {
 	var courses []any
 	for rows.Next() {
 		course := &utils.Application{}
-		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &course.Status, &course.Changer, &course.ChangeDate)
+		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &course.Tutor, &course.Department, &course.Status, &course.Changer, &course.ChangeDate)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -329,7 +329,7 @@ func GetApplications(ctx *fiber.Ctx, db *sql.DB) error {
 	var courses []any
 	for rows.Next() {
 		course := &utils.Application{}
-		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &course.Status, &course.Changer, &course.ChangeDate)
+		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &course.Tutor, &course.Department, &course.Status, &course.Changer, &course.ChangeDate)
 		if err != nil {
 			fmt.Println(err)
 			continue

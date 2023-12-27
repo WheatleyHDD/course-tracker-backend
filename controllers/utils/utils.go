@@ -42,6 +42,8 @@ type Application struct {
 	StartDate  time.Time `json:"start_date"`
 	EndDate    time.Time `json:"end_date"`
 	Point      string    `json:"point"`
+	Tutor      string    `json:"tutor"`
+	Department string    `json:"department"`
 	Status     int       `json:"status"`
 	Changer    string    `json:"changer"`
 	ChangeDate time.Time `json:"change_date"`
