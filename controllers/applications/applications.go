@@ -329,12 +329,21 @@ func GetApplications(ctx *fiber.Ctx, db *sql.DB) error {
 	var courses []any
 	for rows.Next() {
 		course := &utils.Application{}
-		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &course.Tutor, &course.Department, &course.Status, &course.Changer, &course.ChangeDate)
+		var test_tutor sql.NullString
+		var test_depart sql.NullString
+		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &test_tutor, &test_depart, &course.Status, &course.Changer, &course.ChangeDate)
 		if err != nil {
 			fmt.Println(err)
 			continue
 			// return errors.RespError(ctx, "Ошибка в формировании списка")
 		}
+		if test_tutor.Valid {
+			course.Tutor = test_tutor.String
+		}
+		if test_depart.Valid {
+			course.Department = test_depart.String
+		}
+
 		courses = append(courses, course)
 	}
 

@@ -35,18 +35,18 @@ type ResponseStruct struct {
 }
 
 type Application struct {
-	ID         int64          `json:"id"`
-	CourseName string         `json:"course_name"`
-	Student    string         `json:"student"`
-	Cost       int            `json:"cost"`
-	StartDate  time.Time      `json:"start_date"`
-	EndDate    time.Time      `json:"end_date"`
-	Point      string         `json:"point"`
-	Tutor      sql.NullString `json:"tutor"`
-	Department sql.NullString `json:"department"`
-	Status     int            `json:"status"`
-	Changer    string         `json:"changer"`
-	ChangeDate time.Time      `json:"change_date"`
+	ID         int64     `json:"id"`
+	CourseName string    `json:"course_name"`
+	Student    string    `json:"student"`
+	Cost       int       `json:"cost"`
+	StartDate  time.Time `json:"start_date"`
+	EndDate    time.Time `json:"end_date"`
+	Point      string    `json:"point"`
+	Tutor      string    `json:"tutor"`
+	Department string    `json:"department"`
+	Status     int       `json:"status"`
+	Changer    string    `json:"changer"`
+	ChangeDate time.Time `json:"change_date"`
 }
 
 type Comment struct {
