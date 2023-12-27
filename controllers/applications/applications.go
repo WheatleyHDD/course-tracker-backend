@@ -126,7 +126,7 @@ func AddApplication(ctx *fiber.Ctx, db *sql.DB) error {
 
 	// Проверка на валидность
 	if form.CourseName == "" || form.Cost == 0 || form.StartDate == "" || form.EndDate == "" ||
-		form.Point == "" || form.StudentEmail == "" || form.AccessToken == "" {
+		form.Point == "" || form.AccessToken == "" {
 		return errors.RespError(ctx, "Одно или несколько полей незаполнено")
 	}
 
@@ -141,6 +141,8 @@ func AddApplication(ctx *fiber.Ctx, db *sql.DB) error {
 
 	if user.Perms == 0 {
 		form.StudentEmail = user.Email
+	} else if form.StudentEmail == "" {
+		return errors.RespError(ctx, "Нет E-mail студента")
 	}
 
 	// Конвертируем даты
