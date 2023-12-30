@@ -58,6 +58,14 @@ func Route(app *fiber.App, db *sql.DB) {
 		return applications.GetApplications(c, db)
 	})
 
+	// Для календаря
+	app.Post(apiUrl+"/applications/date", func(c *fiber.Ctx) error {
+		return applications.GetApplicationsGroupByDate(c, db)
+	})
+	app.Post(apiUrl+"/applications/getByGroup", func(c *fiber.Ctx) error {
+		return applications.GetApplicationsByGroup(c, db)
+	})
+
 	// =============================
 	// ==== Работа со статусами ====
 	// =============================

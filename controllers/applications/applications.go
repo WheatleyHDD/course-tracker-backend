@@ -30,6 +30,21 @@ type UserApplicationsForm struct {
 	utils.ListTags
 }
 
+type GetApplicationsGroupByDateForm struct {
+	DateFrom string `query:"date_from" form:"date_from" json:"date_from"`
+	DateTo   string `query:"date_to" form:"date_to" json:"date_to"`
+	utils.AccessTokenForm
+	utils.ListTags
+}
+
+type GetApplicationsByGroupForm struct {
+	CourseName string `query:"course_name" form:"course_name" json:"course_name"`
+	StartDate  string `query:"start_date" form:"start_date" json:"start_date"`
+	EndDate    string `query:"end_date" form:"end_date" json:"end_date"`
+	utils.AccessTokenForm
+	utils.ListTags
+}
+
 type AddApplicationForm struct {
 	StudentEmail string `query:"student_email" form:"student_email" json:"student_email"`
 	CourseName   string `query:"course_name" form:"course_name" json:"course_name"`
@@ -49,6 +64,13 @@ type ApplicationData struct {
 	start_date  string
 	end_date    string
 	point       string
+}
+
+type GroupApplication struct {
+	CourseName string    `json:"course_name"`
+	StartDate  time.Time `json:"start_date"`
+	EndDate    time.Time `json:"end_date"`
+	Count      int       `json:"count"`
 }
 
 // ==========================
@@ -292,6 +314,7 @@ func EditApplication(ctx *fiber.Ctx, db *sql.DB) error {
 	})
 }
 
+// ==================== Админский ====================
 // ================ /api/applications ================
 func GetApplications(ctx *fiber.Ctx, db *sql.DB) error {
 	// Получение параметров
@@ -320,6 +343,156 @@ func GetApplications(ctx *fiber.Ctx, db *sql.DB) error {
 
 	// Получаем данные из БД
 	rows, err := db.Query("SELECT * FROM cources_and_statuses ORDER BY id ASC LIMIT $1 OFFSET $2", form.Limit, form.Page*form.Limit)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка в запросе к БД: "+err.Error())
+	}
+	defer rows.Close()
+
+	// Создаем массив из записей
+	var courses []any
+	for rows.Next() {
+		course := &utils.Application{}
+		var test_tutor sql.NullString
+		var test_depart sql.NullString
+		err := rows.Scan(&course.ID, &course.CourseName, &course.Student, &course.Cost, &course.StartDate, &course.EndDate, &course.Point, &test_tutor, &test_depart, &course.Status, &course.Changer, &course.ChangeDate)
+		if err != nil {
+			fmt.Println(err)
+			continue
+			// return errors.RespError(ctx, "Ошибка в формировании списка")
+		}
+		if test_tutor.Valid {
+			course.Tutor = test_tutor.String
+		}
+		if test_depart.Valid {
+			course.Department = test_depart.String
+		}
+
+		courses = append(courses, course)
+	}
+
+	// Формируем JSON ответ
+	r := &utils.ResponseStruct{Success: true, Response: courses}
+	response, err := json.Marshal(r)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка формирования JSON ответа")
+	}
+
+	return ctx.SendString(string(response))
+}
+
+// ==================== Админский ====================
+// ============= /api/applications/date ==============
+func GetApplicationsGroupByDate(ctx *fiber.Ctx, db *sql.DB) error {
+	// Получение параметров
+	form := new(GetApplicationsGroupByDateForm)
+	if err := ctx.BodyParser(form); err != nil {
+		return errors.RespError(ctx, err.Error())
+	}
+
+	// Получение данных пользователя
+	user, errs := utils.GetUser(form.AccessToken, db)
+	if user == nil {
+		if errs == "" {
+			return errors.RespError(ctx, "Недействительный access_token")
+		}
+		return errors.RespError(ctx, errs)
+	}
+
+	if user.Perms == 0 {
+		return errors.RespError(ctx, "Нет доступа")
+	}
+
+	// Перевод в дефолтные значения
+	if form.Limit == 0 {
+		form.Limit = 10
+	}
+
+	// Конвертируем даты
+	start_date, err := time.Parse("2006-01-02", form.DateFrom)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка конвертации даты")
+	}
+	end_date, err := time.Parse("2006-01-02", form.DateTo)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка конвертации даты")
+	}
+	if end_date.Sub(start_date) <= 0 {
+		return errors.RespError(ctx, "Неверный временной диапазон")
+	}
+
+	// Получаем данные из БД
+	rows, err := db.Query("SELECT * FROM period_courses WHERE (start_date BETWEEN $1 AND $2) OR (end_date BETWEEN $1 AND $2) OR (start_date <= $1 AND end_date >= $2) LIMIT $3 OFFSET $4", start_date, end_date, form.Limit, form.Page*form.Limit)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка в запросе к БД: "+err.Error())
+	}
+	defer rows.Close()
+
+	// Создаем массив из записей
+	var courses []any
+	for rows.Next() {
+		coursesGroup := &GroupApplication{}
+		err := rows.Scan(&coursesGroup.CourseName, &coursesGroup.StartDate, &coursesGroup.EndDate, &coursesGroup.Count)
+		if err != nil {
+			fmt.Println(err)
+			continue
+			// return errors.RespError(ctx, "Ошибка в формировании списка")
+		}
+
+		courses = append(courses, coursesGroup)
+	}
+
+	// Формируем JSON ответ
+	r := &utils.ResponseStruct{Success: true, Response: courses}
+	response, err := json.Marshal(r)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка формирования JSON ответа")
+	}
+
+	return ctx.SendString(string(response))
+}
+
+// ==================== Админский ====================
+// =========== /api/applications/getByGroup ==========
+func GetApplicationsByGroup(ctx *fiber.Ctx, db *sql.DB) error {
+	// Получение параметров
+	form := new(GetApplicationsByGroupForm)
+	if err := ctx.BodyParser(form); err != nil {
+		return errors.RespError(ctx, err.Error())
+	}
+
+	// Получение данных пользователя
+	user, errs := utils.GetUser(form.AccessToken, db)
+	if user == nil {
+		if errs == "" {
+			return errors.RespError(ctx, "Недействительный access_token")
+		}
+		return errors.RespError(ctx, errs)
+	}
+
+	if user.Perms == 0 {
+		return errors.RespError(ctx, "Нет доступа")
+	}
+
+	// Перевод в дефолтные значения
+	if form.Limit == 0 {
+		form.Limit = 10
+	}
+
+	// Конвертируем даты
+	start_date, err := time.Parse("2006-01-02", form.StartDate)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка конвертации даты")
+	}
+	end_date, err := time.Parse("2006-01-02", form.EndDate)
+	if err != nil {
+		return errors.RespError(ctx, "Ошибка конвертации даты")
+	}
+	if end_date.Sub(start_date) <= 0 {
+		return errors.RespError(ctx, "Неверный временной диапазон")
+	}
+
+	// Получаем данные из БД
+	rows, err := db.Query("SELECT * FROM cources_and_statuses WHERE course_name = $1 AND start_date = $2 AND end_date = $3 ORDER BY id ASC LIMIT $4 OFFSET $5", form.CourseName, start_date, end_date, form.Limit, form.Page*form.Limit)
 	if err != nil {
 		return errors.RespError(ctx, "Ошибка в запросе к БД: "+err.Error())
 	}

@@ -73,3 +73,11 @@ LEFT JOIN statuses s ON s.id = sids.id;
 CREATE VIEW user_info AS
 SELECT u.email, u.first_name, u.second_name, u.middle_name, u.perms
 FROM users u
+
+CREATE VIEW period_courses AS
+SELECT course_name, start_date, end_date, COUNT(*)
+FROM course_applications
+GROUP BY 
+    course_name, start_date, end_date
+ORDER BY 
+    course_name, start_date;
